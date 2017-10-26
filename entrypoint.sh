@@ -47,11 +47,21 @@ function split_certs() {
     fi
   done
 
-  mkdir -p /etc/haproxy/certs > /dev/null 2>&1
   rm /etc/haproxy/certs/cert*_gen.pem > /dev/null 2>&1 || true
   mv cert*_gen.pem /etc/haproxy/certs/
-  etcd_set "certs/bundle" "value=true"
   rm cert*_gen.pem > /dev/null 2>&1 || true
+}
+
+HAVE_CERTS=
+
+function load_certs() {
+  mkdir -p /etc/haproxy/certs > /dev/null 2>&1
+
+  if [ -n "${SSL_CERTS}" ]; then
+    echo "[kontena-lb] splitting bundled certificates from SSL_CERTS..."
+    split_certs
+    HAVE_CERTS=true
+  fi
 }
 
 # tail debug log (bypass confd restrictions)
@@ -81,11 +91,11 @@ fi
 echo "[kontena-lb] booting $LB_NAME. Using etcd: $ETCD_NODE"
 
 bootstrap
+load_certs
 
-if [ -n "$SSL_CERTS" ]; then
-  echo "[kontena-lb] splitting bundled certificates..."
-  split_certs
+if [ "$HAVE_CERTS" ]; then
   echo "[kontena-lb] certificates updated into HAProxy."
+  etcd_set "certs/bundle" "value=true"
 else
   echo "[kontena-lb] No certificates found, disabling SSL support"
   etcd_rm "certs/bundle"
