@@ -13,3 +13,9 @@ load "common"
   run config
   assert_output_contains "bind *:443 ssl crt /etc/haproxy/certs/" 1
 }
+
+@test "loads certs from both SSL_CERTS and SSL_CERT_*" {
+  run docker exec kontenaloadbalancer_lb_1 ls /etc/haproxy/certs
+  assert_output_contains "cert00_gen.pem" 1
+  assert_output_contains "SSL_CERT_test1.pem" 1
+}

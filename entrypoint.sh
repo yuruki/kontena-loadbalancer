@@ -29,6 +29,18 @@ function bootstrap() {
 }
 
 # split certificates
+function load_cert() {
+  local name=$1
+  local path=$2
+
+  if openssl x509 -in $path -noout &> /dev/null ; then
+    echo "[kontena-lb] Valid certificate at $path"
+    mv $path /etc/haproxy/certs/$name.pem
+  else
+    echo "[kontena-lb] ERROR: Invalid certificate $name at $path, ignoring so it does not crash whole LB." >&2
+  fi
+}
+
 function split_certs() {
   echo "${SSL_CERTS}" > /tmp/certs.pem
   cd /tmp
@@ -55,13 +67,24 @@ function split_certs() {
 HAVE_CERTS=
 
 function load_certs() {
-  mkdir -p /etc/haproxy/certs > /dev/null 2>&1
+  mkdir -p /tmp/ssl_certs
+  mkdir -p /etc/haproxy/certs
 
   if [ -n "${SSL_CERTS}" ]; then
     echo "[kontena-lb] splitting bundled certificates from SSL_CERTS..."
     split_certs
     HAVE_CERTS=true
   fi
+
+  for certenv in "${!SSL_CERT_@}"; do
+    echo "[kontena-lb] loading bundled certificate from $certenv..."
+
+    cat > /tmp/ssl_certs/$certenv.pem <<<"${!certenv}"
+    load_cert "$certenv" /tmp/ssl_certs/$certenv.pem
+    HAVE_CERTS=true
+  done
+
+  rm -rf /tmp/ssl_certs
 }
 
 # tail debug log (bypass confd restrictions)
