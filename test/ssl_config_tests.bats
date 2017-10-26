@@ -11,5 +11,5 @@ load "common"
 
 @test "configures haproxy to load certs when configured with SSL_CERTS" {
   run config
-  assert_output_contains "bind *:443 ssl crt /etc/haproxy/certs/"
+  assert_output_contains "bind *:443 ssl crt /etc/haproxy/certs/" 1
 }
