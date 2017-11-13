@@ -1,5 +1,4 @@
 <% services.each do |service| %>
-<% if service.upstreams? %>
 backend <%= service.name %>
     option forwardfor
     <% service.custom_settings.each do |setting| %>
@@ -38,5 +37,4 @@ userlist auth_users_<%= service.name %>
   <%= service.basic_auth_secrets%>
 <% end %>
 
-<% end %>
 <% end %>

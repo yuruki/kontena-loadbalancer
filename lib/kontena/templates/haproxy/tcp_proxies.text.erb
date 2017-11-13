@@ -1,5 +1,5 @@
 <% services.each do |service| %>
-<% if service.upstreams? && service.external_port %>
+<% if service.external_port %>
 listen <%= service.name %>
     bind *:<%= service.external_port %>
     mode tcp
