@@ -70,7 +70,9 @@ listen http-in
       {{end}}
       {{$virtual_path := printf "/services/%s/virtual_path" $service}}
       {{if exists $virtual_path}}
-        acl host_{{$service}}_virtual_path url_beg {{getv $virtual_path}}
+        {{range $path := split (getv $virtual_path) "," }}
+          acl host_{{$service}}_virtual_path url_beg {{$path}}
+        {{end}}
       {{end}}
     {{end}}
     {{end}}
@@ -151,11 +153,15 @@ backend {{$service}}
     {{if exists $keep_virtual_path}}
     {{if exists $virtual_path}}
     {{if not (eq (getv $keep_virtual_path) "true")}}
-    reqrep ^([^\ :]*)\ {{getv $virtual_path}}[/]?(.*)     \1\ /\2
+    {{range $path := split (getv $virtual_path) "," }}
+    reqrep ^([^\ :]*)\ {{$path}}[/]?(.*)     \1\ /\2
+    {{end}}
     {{end}}
     {{end}}
     {{else if exists $virtual_path}}
-    reqrep ^([^\ :]*)\ {{getv $virtual_path}}[/]?(.*)     \1\ /\2
+    {{range $path := split (getv $virtual_path) "," }}
+    reqrep ^([^\ :]*)\ {{$path}}[/]?(.*)     \1\ /\2
+    {{end}}
     {{end}}
 
     {{$http_check_uri := (printf "/services/%s/health_check_uri" $service)}}
